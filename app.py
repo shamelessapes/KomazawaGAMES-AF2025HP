@@ -92,7 +92,7 @@ MAP_IMAGE_PATH = "assets\map_placeholder.png"
 TOP_IMAGE = "assets\AF2025_poster_mini.PNG"
 
 # Streamlitのシークレットから読み込む想定
-DB_URL = st.secrets["postgresql://postgres:rqCCQquvV#7LhTW@db.hkqhzmimcebrijuvbqfo.supabase.co:5432/postgres"]
+DB_URL = st.secrets["DATABASE_URL"] 
 engine = create_engine(DB_URL, pool_pre_ping=True)
 
 # PostgresはすでにSQLで作成済みなので、ここでテーブル作成しなくてOK
