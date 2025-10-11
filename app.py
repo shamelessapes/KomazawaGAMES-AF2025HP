@@ -98,6 +98,16 @@ engine = create_engine(DB_URL, pool_pre_ping=True)
 # PostgresはすでにSQLで作成済みなので、ここでテーブル作成しなくてOK
 # （入れるならDDLをPostgres方言に合わせる）
 
+if TOP_IMAGE.exists():
+    with open(TOP_IMAGE, "rb") as f:
+        st.image(f.read())  # 生バイトで読み込み
+else:
+    st.warning(f"ポスター画像が見つかりません: {TOP_IMAGE}")
+    if ASSETS_DIR.exists():
+        st.write("assets 内にあるファイル一覧:")
+        st.write(sorted(os.listdir(ASSETS_DIR)))
+    else:
+        st.error("assets フォルダが見つかりません。リポジトリに含めてコミットしてください。")
 
 st.set_page_config(page_title="特設サイト", page_icon="🎮", layout="centered")
 if "page" not in st.session_state:
