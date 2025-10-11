@@ -116,7 +116,7 @@ TOP_IMAGE_PATH = ASSETS_DIR / "AF2025_poster_mini.PNG"        # ← 大文字小
 
 # --- DB 接続（Secrets から） ---
 DB_URL = st.secrets["DATABASE_URL"]
-engine = create_engine(DB_URL, pool_pre_ping=True, connect_args={"sslmode": "require"})
+engine = create_engine(DB_URL, pool_pre_ping=True)
 
 
 # ===== ページ状態（radioと分離して安定運用）=====
