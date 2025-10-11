@@ -16,6 +16,90 @@ SITE_TITLE = "🎮 駒澤GAMES：AF2025特設サイト"
 FEEDBACK_FORM_URL = "https://example.com/your-google-form"
 HOST_PORT = "8501"
 
+# ====== ゲームデータ一覧 ======
+GAMES = [
+    {
+        "id": "stg1",
+        "title": "『巫女さん、はじめてのおつかい(体験版)』",
+        "genre": "弾幕STG",
+        "time": "5分",
+        "desc": "東方風の弾幕STGプロトタイプ。",
+        "download": "https://example.com/download/stg.zip"
+    },
+    {
+        "id": "baka1",
+        "title": "『逃げろ！』",
+        "genre": "バカゲー",
+        "time": "3分",
+        "desc": "説明文",
+        "download": "https://example.com/download/dialogue.zip"
+    },
+    {
+        "id": "action1",
+        "title": "『勇魔紀行』",
+        "genre": "アクション",
+        "time": "10分",
+        "desc": "説明文",
+        "download": "https://example.com/download/karakasa.zip"
+    },
+    {
+        "id": "rythm1",
+        "title": "『皆勤Beats!』",
+        "genre": "リズムゲー",
+        "time": "3分",
+        "desc": "説明文",
+        "download": "https://example.com/download/dialogue.zip"
+    },
+    {
+        "id": "block",
+        "title": "『渡邊ブロック崩し』",
+        "genre": "ブロック崩し",
+        "time": "3分",
+        "desc": "説明文。",
+        "download": "https://example.com/download/dialogue.zip"
+    },
+    {
+        "id": "rpg1",
+        "title": "『TerreBleue』",
+        "genre": "RPG",
+        "time": "3分",
+        "desc": "説明文",
+        "download": "https://example.com/download/dialogue.zip"
+    },
+    {
+        "id": "rpg2",
+        "title": "『Sentence』",
+        "genre": "RPG",
+        "time": "3分",
+        "desc": "説明文",
+        "download": "https://example.com/download/dialogue.zip"
+    },
+    {
+        "id": "rpg3",
+        "title": "『平和の祭典』",
+        "genre": "RPG",
+        "time": "3分",
+        "desc": "説明文",
+        "download": "https://example.com/download/dialogue.zip"
+    },
+    {
+        "id": "rpg4",
+        "title": "『Post-Humannica』",
+        "genre": "RPG",
+        "time": "3分",
+        "desc": "説明文",
+        "download": "https://example.com/download/dialogue.zip"
+    },
+]
+
+# IDとタイトルの相互マップ（ランキング表示などで使用）
+ID_TO_TITLE = {g["id"]: g["title"] for g in GAMES}
+TITLE_TO_ID = {g["title"]: g["id"] for g in GAMES}
+
+
+
+
+
 # --- ファイルパスは Path で & スラッシュ統一 ---
 BASE_DIR = Path(__file__).parent
 ASSETS_DIR = BASE_DIR / "assets"
