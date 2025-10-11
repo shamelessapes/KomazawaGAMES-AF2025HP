@@ -10,21 +10,27 @@ import streamlit as st
 from sqlalchemy import create_engine, text
 
 # ---- 1) 最初に page_config（他の st.* より先） ----
-st.set_page_config(page_title="特設サイト", page_icon="🎮", layout="centered")
+st.set_page_config(page_title="駒澤GAMES:AF2025特設サイト", page_icon="🎮", layout="centered")
 
 # ---- 2) 定数・データ ----
 SITE_TITLE = "🎮 駒澤GAMES：AF2025特設サイト"
 FEEDBACK_FORM_URL = "https://example.com/your-google-form"  # 必要なら Secrets に移してもOK
 HOST_PORT = "8501"
 
-# ゲーム一覧（必要に応じて自由に編集）
+# ゲーム一覧
 GAMES = [
-    {"id": "stg1",   "title": "『巫女さん、はじめてのおつかい(体験版)』", "genre": "弾幕STG",   "time": "5分", "desc": "東方風の弾幕STGプロトタイプ。", "download": "https://example.com/download/stg.zip"},
-    {"id": "baka1",  "title": "『逃げろ！』",                           "genre": "バカゲー",   "time": "3分", "desc": "説明文",                          "download": "https://example.com/download/dialogue.zip"},
+    {"id": "stg1",   "title": "『巫女さん、はじめてのおつかい(体験版)』", "genre": "弾幕STG",   "time": "10~15分", "desc": "ある日、女子高生の桜と明音はある「おつかい」を頼まれる。\
+           \nなんとそれは、町中で暴走する妖怪たちを退治し、その原因を突き止めて欲しいというもので__!?\
+           \n獲得したスコアに応じてエンディングが変わるぞ。目指せ、報酬100万円!!", "download": "https://example.com/download/stg.zip"},
+    {"id": "baka1",  "title": "『逃げろ！』",                           "genre": "バカゲー",   "time": "10分", "desc": "宿題、勉強、受験・・・。世の中には思わず逃げ出したくなっちゃうような嫌なことがたくさん！\
+            \nこのゲームは、そんな人生の嫌なことからひたすら逃げ続けるゲームです。\
+            \n**全てから逃げ続けた先に****待ち受けるものとは一体・・・！？**", "download": "https://example.com/download/dialogue.zip"},
     {"id": "action1","title": "『勇魔紀行』",                           "genre": "アクション", "time": "10分","desc": "説明文",                          "download": "https://example.com/download/karakasa.zip"},
     {"id": "rythm1", "title": "『皆勤Beats!』",                         "genre": "リズムゲー", "time": "3分", "desc": "説明文",                          "download": "https://example.com/download/dialogue.zip"},
     {"id": "block",  "title": "『渡邊ブロック崩し』",                   "genre": "ブロック崩し","time": "3分","desc": "説明文",                          "download": "https://example.com/download/dialogue.zip"},
-    {"id": "rpg1",   "title": "『TerreBleue』",                         "genre": "RPG",       "time": "3分", "desc": "説明文",                          "download": "https://example.com/download/dialogue.zip"},
+    {"id": "rpg1",   "title": "『TerreBleue』",                         "genre": "RPG",       "time": "フルだと2時間~3時間", "desc": "独自の世界観で繰り広げられる、”世界一青い”RPG。\
+            \n国軍に入隊したことにより、2つの国を巡る争いに巻き込まれる少女たち。\
+            \n彼女たちは戦争を集結させ、再び世界に平和と自然を取り戻すことはできるのか__？", "download": "https://example.com/download/dialogue.zip"},
     {"id": "rpg2",   "title": "『Sentence』",                           "genre": "RPG",       "time": "3分", "desc": "説明文",                          "download": "https://example.com/download/dialogue.zip"},
     {"id": "rpg3",   "title": "『平和の祭典』",                         "genre": "RPG",       "time": "3分", "desc": "説明文",                          "download": "https://example.com/download/dialogue.zip"},
     {"id": "rpg4",   "title": "『Post-Humannica』",                     "genre": "RPG",       "time": "3分", "desc": "説明文",                          "download": "https://example.com/download/dialogue.zip"},
@@ -32,21 +38,35 @@ GAMES = [
 ID_TO_TITLE = {g["id"]: g["title"] for g in GAMES}
 TITLE_TO_ID = {g["title"]: g["id"] for g in GAMES}
 
-# ---- 3) パス系（大小文字を実ファイル名に一致させる）----
+# ---- 3) パス系----
 BASE_DIR = Path(__file__).parent
 ASSETS_DIR = BASE_DIR / "assets"
 MAP_IMAGE_PATH = ASSETS_DIR / "map_placeholder.png"
 TOP_IMAGE_PATH = ASSETS_DIR / "AF2025_poster_mini.PNG"  # ← GitHub上の実ファイル名に完全一致
 
-# ---- 4) DB 接続（Secrets から）。失敗してもアプリは動くようにする ----
+
+# ---- 4) DB 接続（Secrets から・IPv4 強制）----
 ENGINE = None
 try:
-    DB_URL = st.secrets["DATABASE_URL"]  # 例: postgresql+psycopg2://...%23...@.../postgres?sslmode=require
-    ENGINE = create_engine(DB_URL, pool_pre_ping=True)
-    # 疎通テスト
+    DB_URL = st.secrets["DATABASE_URL"] 
+
+    # ←←← ここに nslookup で得た IPv4 を入れる！
+    IPV4_OF_DB = "240d:1a:112:2800:e67e:66ff:fe06:1f2f"
+
+    ENGINE = create_engine(
+        DB_URL,
+        pool_pre_ping=True,
+        connect_args={
+            "sslmode": "require",
+            "connect_timeout": 10,
+            "hostaddr": IPV4_OF_DB,   # これが効く！(psycopg2 の機能)
+        },
+    )
+
     with ENGINE.begin() as conn:
         conn.exec_driver_sql("SELECT 1")
-    # 初回用：なければテーブル作成（Postgres）
+
+    # （初回だけ）なければ tickets テーブル作成
     with ENGINE.begin() as conn:
         conn.execute(text("""
             CREATE TABLE IF NOT EXISTS tickets (
@@ -55,11 +75,11 @@ try:
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             )
         """))
-    st.caption("✅ DB接続OK")
+    st.caption("✅ DB接続OK（IPv4 強制）")
 except KeyError:
     st.warning("（開発向け）Secrets の DATABASE_URL が未設定です。DBを使わず閲覧のみで動作します。")
 except Exception as e:
-    st.error("❌ DB接続に失敗しました。DATABASE_URL（#→%23、?sslmode=require）を確認してください。")
+    st.error("❌ DB接続に失敗しました。DATABASE_URL と hostaddr（IPv4）を確認してください。")
     st.exception(e)
 
 # ---- 5) ページ状態（radioのキーと分離）----
