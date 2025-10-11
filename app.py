@@ -3,133 +3,44 @@ import os
 import io
 import time
 from datetime import datetime
+from pathlib import Path   # ← 追加
 import pandas as pd
 import qrcode
 import streamlit as st
 from sqlalchemy import create_engine, text
 
+# ===== ここは最初に呼ぶ（他の st.* より前）=====
+st.set_page_config(page_title="特設サイト", page_icon="🎮", layout="centered")
+
 SITE_TITLE = "🎮 駒澤GAMES：AF2025特設サイト"
 FEEDBACK_FORM_URL = "https://example.com/your-google-form"
 HOST_PORT = "8501"
 
-GAMES = [
-    {
-        "id": "stg1",
-        "title": "『巫女さん、はじめてのおつかい(体験版)』",
-        "genre": "弾幕STG",
-        "time": "5分",
-        "desc": "東方風の弾幕STGプロトタイプ。5分体験版。",
-        "download": "https://example.com/download/stg.zip"
-    },
-    {
-        "id": "baka1",
-        "title": "『逃げろ！』",
-        "genre": "バカゲー",
-        "time": "3分",
-        "desc": "ここに説明文",
-        "download": "https://example.com/download/dialogue.zip"
-    },
-    {
-        "id": "action1",
-        "title": "『勇魔紀行』",
-        "genre": "アクション",
-        "time": "10分",
-        "desc": "ここに説明文",
-        "download": "https://example.com/download/karakasa.zip"
-    },
-        {
-        "id": "rythm1",
-        "title": "『皆勤Beats!』",
-        "genre": "リズムゲー",
-        "time": "3分",
-        "desc": "ここに説明文",
-        "download": "https://example.com/download/dialogue.zip"
-    },
-    {
-        "id": "block",
-        "title": "『渡邊ブロック崩し』",
-        "genre": "ブロック崩し",
-        "time": "3分",
-        "desc": "ここに説明文",
-        "download": "https://example.com/download/dialogue.zip"
-    },
-    {
-        "id": "rpg1",
-        "title": "『TerreBleue』",
-        "genre": "RPG",
-        "time": "3分",
-        "desc": "ここに説明文",
-        "download": "https://example.com/download/dialogue.zip"
-    },
-    {
-        "id": "rpg2",
-        "title": "『Sentence』",
-        "genre": "RPG",
-        "time": "3分",
-        "desc": "ここに説明文",
-        "download": "https://example.com/download/dialogue.zip"
-    },
-    {
-        "id": "rpg3",
-        "title": "『平和の祭典』",
-        "genre": "RPG",
-        "time": "3分",
-        "desc": "ここに説明文",
-        "download": "https://example.com/download/dialogue.zip"
-    },
-    {
-        "id": "rpg4",
-        "title": "『Post-Humannica』",
-        "genre": "RPG",
-        "time": "3分",
-        "desc": "ここに説明文",
-        "download": "https://example.com/download/dialogue.zip"
-    },
-]
+# --- ファイルパスは Path で & スラッシュ統一 ---
+BASE_DIR = Path(__file__).parent
+ASSETS_DIR = BASE_DIR / "assets"
+MAP_IMAGE_PATH = ASSETS_DIR / "map_placeholder.png"           # ← \ をやめる
+TOP_IMAGE_PATH = ASSETS_DIR / "AF2025_poster_mini.PNG"        # ← 大文字小文字を実ファイルと一致
 
-
-MAP_IMAGE_PATH = "assets\map_placeholder.png"
-TOP_IMAGE = "assets\AF2025_poster_mini.PNG"
-
-# Streamlitのシークレットから読み込む想定
-DB_URL = st.secrets["DATABASE_URL"] 
+# --- DB 接続（Secrets から） ---
+DB_URL = st.secrets["DATABASE_URL"]
 engine = create_engine(DB_URL, pool_pre_ping=True)
 
-# PostgresはすでにSQLで作成済みなので、ここでテーブル作成しなくてOK
-# （入れるならDDLをPostgres方言に合わせる）
-
-if TOP_IMAGE.exists():
-    with open(TOP_IMAGE, "rb") as f:
-        st.image(f.read())  # 生バイトで読み込み
-else:
-    st.warning(f"ポスター画像が見つかりません: {TOP_IMAGE}")
-    if ASSETS_DIR.exists():
-        st.write("assets 内にあるファイル一覧:")
-        st.write(sorted(os.listdir(ASSETS_DIR)))
-    else:
-        st.error("assets フォルダが見つかりません。リポジトリに含めてコミットしてください。")
-
-st.set_page_config(page_title="特設サイト", page_icon="🎮", layout="centered")
-if "page" not in st.session_state:
-    st.session_state.page = "トップ"
-
-# ---- set_page_config の直後あたり ----
+# ===== ページ状態（radioと分離して安定運用）=====
 PAGES = ["トップ", "ゲーム一覧", "教場MAP", "整理券発行", "アンケート・フィードバック"]
 
-# 初期化（最初の1回だけ）
 if "page" not in st.session_state:
     st.session_state.page = "トップ"
 if "page_select" not in st.session_state:
     st.session_state.page_select = st.session_state.page
 
-# ★ ボタンからのジャンプ要求があれば、radio を作る前に反映
+# ボタンからのジャンプ要求があれば、radio を作る前に反映
 if "jump_to" in st.session_state:
     target = st.session_state.jump_to
     st.session_state.page = target
     st.session_state.page_select = target
     del st.session_state["jump_to"]
 
-# サイドバー radio（← index を渡さないのがポイント！）
 def _on_sidebar_change():
     st.session_state.page = st.session_state.page_select
 
@@ -137,7 +48,7 @@ st.sidebar.header("ページ")
 st.sidebar.radio(
     "ページ",
     PAGES,
-    key="page_select",
+    key="page_select",          # ← radio は page_select
     on_change=_on_sidebar_change
 )
 
@@ -163,15 +74,15 @@ def make_qr(url: str) -> bytes:
     return buf.getvalue()
 
 if page == "トップ":
-    st.image(TOP_IMAGE)
-    st.info("### :star:展示内容:star:")
-
-    # 説明①
-    st.markdown("1. まずは遊びたいゲームを選びましょう。")
-    # 👉 押したら「ゲーム一覧」に即ジャンプ
-    if st.button("🎮 展示作品一覧を見る"):
-        st.session_state.jump_to = "ゲーム一覧"
-        st.rerun()  # 即リランして、次の冒頭でジャンプが実行される                                    # 即反映
+    if TOP_IMAGE_PATH.exists():
+        st.image(str(TOP_IMAGE_PATH))
+    else:
+        st.warning(f"ポスター画像が見つかりません: {TOP_IMAGE_PATH}")
+        if ASSETS_DIR.exists():
+            st.write("assets 内にあるファイル一覧:", sorted(os.listdir(ASSETS_DIR)))
+        else:
+            st.error("assets フォルダが見つかりません。リポジトリに含めてコミットしてください。")
+                                   # 即反映
 
     # 説明②
     st.markdown("2. 遊びたいゲームが決まったら、**このサイトから整理券を発行します。**")
@@ -214,10 +125,11 @@ elif page == "ゲーム一覧":
 
 elif page == "教場MAP":
     st.subheader("教場MAP")
-    if os.path.exists(MAP_IMAGE_PATH):
-        st.image(MAP_IMAGE_PATH, caption="会場配置図（差し替え可）", use_column_width=True)
+    if MAP_IMAGE_PATH.exists():
+        st.image(str(MAP_IMAGE_PATH), caption="会場配置図（差し替え可）", use_column_width=True)
     else:
-        st.warning("MAP画像が見つかりません。assets/map_placeholder.png を差し替えてください。")
+        st.warning(f"MAP画像が見つかりません: {MAP_IMAGE_PATH}")
+
 
 
 
