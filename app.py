@@ -9,6 +9,14 @@ import qrcode
 import streamlit as st
 from sqlalchemy import create_engine, text
 
+try:
+    with engine.begin() as conn:
+        conn.exec_driver_sql("SELECT NOW()")  # 軽い疎通テスト
+    st.caption("✅ DB接続OK")
+except Exception as e:
+    st.error("❌ DB接続に失敗しました。Secretsの DATABASE_URL（SSL含む）を再確認してください。")
+    st.exception(e)  # Cloudのログにも詳細が出る
+
 # ===== ここは最初に呼ぶ（他の st.* より前）=====
 st.set_page_config(page_title="特設サイト", page_icon="🎮", layout="centered")
 
@@ -108,7 +116,8 @@ TOP_IMAGE_PATH = ASSETS_DIR / "AF2025_poster_mini.PNG"        # ← 大文字小
 
 # --- DB 接続（Secrets から） ---
 DB_URL = st.secrets["DATABASE_URL"]
-engine = create_engine(DB_URL, pool_pre_ping=True)
+engine = create_engine(DB_URL, pool_pre_ping=True, connect_args={"sslmode": "require"})
+
 
 # ===== ページ状態（radioと分離して安定運用）=====
 PAGES = ["トップ", "ゲーム一覧", "教場MAP", "整理券発行", "アンケート・フィードバック"]
@@ -169,7 +178,7 @@ if page == "トップ":
                                    # 即反映
 
     # 説明②
-    st.markdown("2. 遊びたいゲームが決まったら、**このサイトから整理券を発行します。**")
+    st.markdown("2. 遊びたいゲームが決まったら、注意事項に同意して**このサイトから整理券を発行します。**")
     # 👉 押したら「整理券＆ランキング」に即ジャンプ
     if st.button("🎫 整理券を発行する"):
         st.session_state.jump_to = "整理券発行"
