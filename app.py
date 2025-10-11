@@ -1,133 +1,74 @@
-
+# ==================== app.py（完全版・置き換えOK） ====================
 import os
 import io
-import time
 from datetime import datetime
-from pathlib import Path   # ← 追加
+from pathlib import Path
+
 import pandas as pd
 import qrcode
 import streamlit as st
 from sqlalchemy import create_engine, text
 
-try:
-    with engine.begin() as conn:
-        conn.exec_driver_sql("SELECT NOW()")  # 軽い疎通テスト
-    st.caption("✅ DB接続OK")
-except Exception as e:
-    st.error("❌ DB接続に失敗しました。Secretsの DATABASE_URL（SSL含む）を再確認してください。")
-    st.exception(e)  # Cloudのログにも詳細が出る
-
-# ===== ここは最初に呼ぶ（他の st.* より前）=====
+# ---- 1) 最初に page_config（他の st.* より先） ----
 st.set_page_config(page_title="特設サイト", page_icon="🎮", layout="centered")
 
+# ---- 2) 定数・データ ----
 SITE_TITLE = "🎮 駒澤GAMES：AF2025特設サイト"
-FEEDBACK_FORM_URL = "https://example.com/your-google-form"
+FEEDBACK_FORM_URL = "https://example.com/your-google-form"  # 必要なら Secrets に移してもOK
 HOST_PORT = "8501"
 
-# ====== ゲームデータ一覧 ======
+# ゲーム一覧（必要に応じて自由に編集）
 GAMES = [
-    {
-        "id": "stg1",
-        "title": "『巫女さん、はじめてのおつかい(体験版)』",
-        "genre": "弾幕STG",
-        "time": "5分",
-        "desc": "東方風の弾幕STGプロトタイプ。",
-        "download": "https://example.com/download/stg.zip"
-    },
-    {
-        "id": "baka1",
-        "title": "『逃げろ！』",
-        "genre": "バカゲー",
-        "time": "3分",
-        "desc": "説明文",
-        "download": "https://example.com/download/dialogue.zip"
-    },
-    {
-        "id": "action1",
-        "title": "『勇魔紀行』",
-        "genre": "アクション",
-        "time": "10分",
-        "desc": "説明文",
-        "download": "https://example.com/download/karakasa.zip"
-    },
-    {
-        "id": "rythm1",
-        "title": "『皆勤Beats!』",
-        "genre": "リズムゲー",
-        "time": "3分",
-        "desc": "説明文",
-        "download": "https://example.com/download/dialogue.zip"
-    },
-    {
-        "id": "block",
-        "title": "『渡邊ブロック崩し』",
-        "genre": "ブロック崩し",
-        "time": "3分",
-        "desc": "説明文。",
-        "download": "https://example.com/download/dialogue.zip"
-    },
-    {
-        "id": "rpg1",
-        "title": "『TerreBleue』",
-        "genre": "RPG",
-        "time": "3分",
-        "desc": "説明文",
-        "download": "https://example.com/download/dialogue.zip"
-    },
-    {
-        "id": "rpg2",
-        "title": "『Sentence』",
-        "genre": "RPG",
-        "time": "3分",
-        "desc": "説明文",
-        "download": "https://example.com/download/dialogue.zip"
-    },
-    {
-        "id": "rpg3",
-        "title": "『平和の祭典』",
-        "genre": "RPG",
-        "time": "3分",
-        "desc": "説明文",
-        "download": "https://example.com/download/dialogue.zip"
-    },
-    {
-        "id": "rpg4",
-        "title": "『Post-Humannica』",
-        "genre": "RPG",
-        "time": "3分",
-        "desc": "説明文",
-        "download": "https://example.com/download/dialogue.zip"
-    },
+    {"id": "stg1",   "title": "『巫女さん、はじめてのおつかい(体験版)』", "genre": "弾幕STG",   "time": "5分", "desc": "東方風の弾幕STGプロトタイプ。", "download": "https://example.com/download/stg.zip"},
+    {"id": "baka1",  "title": "『逃げろ！』",                           "genre": "バカゲー",   "time": "3分", "desc": "説明文",                          "download": "https://example.com/download/dialogue.zip"},
+    {"id": "action1","title": "『勇魔紀行』",                           "genre": "アクション", "time": "10分","desc": "説明文",                          "download": "https://example.com/download/karakasa.zip"},
+    {"id": "rythm1", "title": "『皆勤Beats!』",                         "genre": "リズムゲー", "time": "3分", "desc": "説明文",                          "download": "https://example.com/download/dialogue.zip"},
+    {"id": "block",  "title": "『渡邊ブロック崩し』",                   "genre": "ブロック崩し","time": "3分","desc": "説明文",                          "download": "https://example.com/download/dialogue.zip"},
+    {"id": "rpg1",   "title": "『TerreBleue』",                         "genre": "RPG",       "time": "3分", "desc": "説明文",                          "download": "https://example.com/download/dialogue.zip"},
+    {"id": "rpg2",   "title": "『Sentence』",                           "genre": "RPG",       "time": "3分", "desc": "説明文",                          "download": "https://example.com/download/dialogue.zip"},
+    {"id": "rpg3",   "title": "『平和の祭典』",                         "genre": "RPG",       "time": "3分", "desc": "説明文",                          "download": "https://example.com/download/dialogue.zip"},
+    {"id": "rpg4",   "title": "『Post-Humannica』",                     "genre": "RPG",       "time": "3分", "desc": "説明文",                          "download": "https://example.com/download/dialogue.zip"},
 ]
-
-# IDとタイトルの相互マップ（ランキング表示などで使用）
 ID_TO_TITLE = {g["id"]: g["title"] for g in GAMES}
 TITLE_TO_ID = {g["title"]: g["id"] for g in GAMES}
 
-
-
-
-
-# --- ファイルパスは Path で & スラッシュ統一 ---
+# ---- 3) パス系（大小文字を実ファイル名に一致させる）----
 BASE_DIR = Path(__file__).parent
 ASSETS_DIR = BASE_DIR / "assets"
-MAP_IMAGE_PATH = ASSETS_DIR / "map_placeholder.png"           # ← \ をやめる
-TOP_IMAGE_PATH = ASSETS_DIR / "AF2025_poster_mini.PNG"        # ← 大文字小文字を実ファイルと一致
+MAP_IMAGE_PATH = ASSETS_DIR / "map_placeholder.png"
+TOP_IMAGE_PATH = ASSETS_DIR / "AF2025_poster_mini.PNG"  # ← GitHub上の実ファイル名に完全一致
 
-# --- DB 接続（Secrets から） ---
-DB_URL = st.secrets["DATABASE_URL"]
-engine = create_engine(DB_URL, pool_pre_ping=True)
+# ---- 4) DB 接続（Secrets から）。失敗してもアプリは動くようにする ----
+ENGINE = None
+try:
+    DB_URL = st.secrets["DATABASE_URL"]  # 例: postgresql+psycopg2://...%23...@.../postgres?sslmode=require
+    ENGINE = create_engine(DB_URL, pool_pre_ping=True)
+    # 疎通テスト
+    with ENGINE.begin() as conn:
+        conn.exec_driver_sql("SELECT 1")
+    # 初回用：なければテーブル作成（Postgres）
+    with ENGINE.begin() as conn:
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS tickets (
+                id BIGSERIAL PRIMARY KEY,
+                game_id TEXT NOT NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+        """))
+    st.caption("✅ DB接続OK")
+except KeyError:
+    st.warning("（開発向け）Secrets の DATABASE_URL が未設定です。DBを使わず閲覧のみで動作します。")
+except Exception as e:
+    st.error("❌ DB接続に失敗しました。DATABASE_URL（#→%23、?sslmode=require）を確認してください。")
+    st.exception(e)
 
-
-# ===== ページ状態（radioと分離して安定運用）=====
+# ---- 5) ページ状態（radioのキーと分離）----
 PAGES = ["トップ", "ゲーム一覧", "教場MAP", "整理券発行", "アンケート・フィードバック"]
-
 if "page" not in st.session_state:
     st.session_state.page = "トップ"
 if "page_select" not in st.session_state:
     st.session_state.page_select = st.session_state.page
-
-# ボタンからのジャンプ要求があれば、radio を作る前に反映
+# ボタンからのジャンプ要求があれば、radio作成前に反映
 if "jump_to" in st.session_state:
     target = st.session_state.jump_to
     st.session_state.page = target
@@ -138,34 +79,23 @@ def _on_sidebar_change():
     st.session_state.page = st.session_state.page_select
 
 st.sidebar.header("ページ")
-st.sidebar.radio(
-    "ページ",
-    PAGES,
-    key="page_select",          # ← radio は page_select
-    on_change=_on_sidebar_change
-)
-
+st.sidebar.radio("ページ", PAGES, key="page_select", on_change=_on_sidebar_change)
 page = st.session_state.page
 
-
-
-
-
+# ---- 6) ヘッダ ----
 st.title(SITE_TITLE)
 st.info("##### **駒澤GAMESオータムフェスティバル2025特設サイト**へようこそ！ \
            \nこのサイトではゲーム体験に必要な**整理券の発行**や、**体験できるゲームの紹介**を見ることができます。")
 st.divider()
 
-def get_ip_candidates():
-    return [f"http://localhost:{HOST_PORT}"]
-
+# ---- 7) ユーティリティ ----
 def make_qr(url: str) -> bytes:
     img = qrcode.make(url)
-    import io
     buf = io.BytesIO()
     img.save(buf, format="PNG")
     return buf.getvalue()
 
+# ---- 8) 各ページ ----
 if page == "トップ":
     if TOP_IMAGE_PATH.exists():
         st.image(str(TOP_IMAGE_PATH))
@@ -175,26 +105,25 @@ if page == "トップ":
             st.write("assets 内にあるファイル一覧:", sorted(os.listdir(ASSETS_DIR)))
         else:
             st.error("assets フォルダが見つかりません。リポジトリに含めてコミットしてください。")
-                                   # 即反映
 
-    # 説明②
+    st.markdown("1. まずは遊びたいゲームを選びましょう。")
+    if st.button("🎮 展示作品一覧を見る"):
+        st.session_state.jump_to = "ゲーム一覧"
+        st.rerun()
+
     st.markdown("2. 遊びたいゲームが決まったら、注意事項に同意して**このサイトから整理券を発行します。**")
-    # 👉 押したら「整理券＆ランキング」に即ジャンプ
     if st.button("🎫 整理券を発行する"):
         st.session_state.jump_to = "整理券発行"
         st.rerun()
 
-    # 説明③以降
     st.markdown("""
-    3. 順番が来たら、**係の者に整理券をお見せください。** ご案内いたします。  
-    4. 体験が終わったら、ぜひ**アンケートに**ご協力お願いします！  
-    5. 別のゲームを遊びたい場合は、またサイトから整理券を発行することができます。
-    """)
-
+3. 順番が来たら、**係の者に整理券をお見せください。** ご案内いたします。  
+4. 体験が終わったら、ぜひ**アンケートに**ご協力お願いします！  
+5. 別のゲームを遊びたい場合は、またサイトから整理券を発行することができます。
+""")
 
     st.divider()
     st.info("### ブースの場所")
-    #st.image(BOOTH_SITE)
     st.caption("場所は駒沢キャンパス三号館の905教場です。\
                \n9階にあってちょっと大変ですが、ぜひ遊びに来てくださいね！")
     st.divider()
@@ -204,17 +133,16 @@ if page == "トップ":
              \n:camera:**Instagram：**@multicreaters ")
     st.divider()
 
-
 elif page == "ゲーム一覧":
     st.subheader("ブースで遊べるゲーム一覧")
     st.info("DLリンクからゲームをダウンロードして、自宅でも続きを遊べます！")
     for g in GAMES:
-        with st.container(border=True):
+        with st.container():  # border=True は環境により未対応のため外す
             st.markdown(f"### {g['title']}")
-            st.write(f"**ジャンル**: {g['genre']}　｜　**体験時間**: {g['time']}")
+            st.write(f"**ジャンル**: {g.get('genre','—')}　｜　**体験時間**: {g.get('time','—')}")
             st.write(g["desc"])
             st.write(f"[⬇ ダウンロード]({g['download']})")
-
+        st.markdown("---")
 
 elif page == "教場MAP":
     st.subheader("教場MAP")
@@ -223,9 +151,6 @@ elif page == "教場MAP":
     else:
         st.warning(f"MAP画像が見つかりません: {MAP_IMAGE_PATH}")
 
-
-
-
 elif page == "整理券発行":
     st.subheader("ゲーム体験における注意")
     st.info("""- 精密機器のため、**ゲーム以外のPCの操作はスタッフが行います**
@@ -233,7 +158,7 @@ elif page == "整理券発行":
 - 飲食物はPC周辺に置かないでください
 - **スタッフ不在時は体験を停止** します
 - 指示に従っていただけない場合、体験をお断りすることがあります
-    """ )
+    """)
 
     agreed = st.checkbox("注意事項に同意して整理券を発行する。")
 
@@ -243,36 +168,45 @@ elif page == "整理券発行":
         st.divider()
         st.subheader("🎫 整理券発行")
 
-        # ゲーム一覧から選択
         game_options = {g["title"]: g["id"] for g in GAMES}
         selected_title = st.selectbox("体験するゲームを選んでください", list(game_options.keys()))
 
-        if st.button("整理券を発行する"):
-            game_id = game_options[selected_title]
-            with engine.begin() as conn:
-                conn.execute(
-                    text("INSERT INTO tickets (game_id, created_at) VALUES (:gid, :ts)"),
-                    {"gid": game_id, "ts": datetime.utcnow().isoformat()}
-                )
-            st.success(f"『{selected_title}』の整理券を発行しました！")
-            st.caption("※ 受付でゲーム名をお伝えください。順番にご案内します。")
+        if ENGINE is None:
+            st.warning("（現在DBに接続できていないため、整理券の発行は無効です）")
+        else:
+            if st.button("整理券を発行する"):
+                game_id = game_options[selected_title]
+                try:
+                    with ENGINE.begin() as conn:
+                        # created_at は DB 側の DEFAULT NOW() に任せる
+                        conn.execute(text("INSERT INTO tickets (game_id) VALUES (:gid)"), {"gid": game_id})
+                    st.success(f"『{selected_title}』の整理券を発行しました！")
+                    st.caption("※ 受付でゲーム名をお伝えください。順番にご案内します。")
+                except Exception as e:
+                    st.error("整理券の発行に失敗しました（DB接続や権限を確認してください）。")
+                    st.exception(e)
 
         st.divider()
         st.subheader("人気ランキング（リアルタイム）")
-        with engine.begin() as conn:
-            df = pd.read_sql(
-                "SELECT game_id, COUNT(*) AS votes FROM tickets GROUP BY game_id ORDER BY votes DESC",
-                conn
-            )
-        if df.empty:
-            st.write("まだ票がありません。最初の整理券を発行してみましょう！")
+        if ENGINE is None:
+            st.warning("（現在DBに接続できていないため、ランキングは表示できません）")
         else:
-            id_to_title = {g["id"]: g["title"] for g in GAMES}
-            df["title"] = df["game_id"].map(id_to_title)
-            df = df[["title", "votes"]]
-            st.dataframe(df, use_container_width=True)
-            st.bar_chart(df.set_index("title"))
-
+            try:
+                with ENGINE.begin() as conn:
+                    df = pd.read_sql(
+                        "SELECT game_id, COUNT(*) AS votes FROM tickets GROUP BY game_id ORDER BY votes DESC",
+                        conn
+                    )
+                if df.empty:
+                    st.write("まだ票がありません。最初の整理券を発行してみましょう！")
+                else:
+                    df["title"] = df["game_id"].map(ID_TO_TITLE)
+                    df = df[["title", "votes"]]
+                    st.dataframe(df, use_container_width=True)
+                    st.bar_chart(df.set_index("title"))
+            except Exception as e:
+                st.error("ランキングの取得に失敗しました。")
+                st.exception(e)
 
 elif page == "アンケート・フィードバック":
     st.subheader("アンケートのお願い")
@@ -294,3 +228,4 @@ elif page == "アンケート・フィードバック":
 
 st.write("")
 st.caption("© 2025 KomazawaGames ")
+# ==================== ここまで ====================
