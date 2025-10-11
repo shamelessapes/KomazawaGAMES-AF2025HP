@@ -46,23 +46,22 @@ TOP_IMAGE_PATH = ASSETS_DIR / "AF2025_poster_mini.PNG"  # ← GitHub上の実フ
 
 
 # ---- 4) DB 接続（Secrets から・IPv4 強制）----
+# ---- 4) DB 接続（Supabase Pooler / Session 6543, SSL 必須）----
 ENGINE = None
 try:
-    DB_URL = st.secrets["DATABASE_URL"] 
+    DB_URL = st.secrets["DATABASE_URL"]  # 例: postgresql+psycopg2://...@aws-1-ap-northeast-1.pooler.supabase.com:6543/postgres?sslmode=require
 
-    # ←←← ここに nslookup で得た IPv4 を入れる！
-    IPV4_OF_DB = "240d:1a:112:2800:e67e:66ff:fe06:1f2f"
-
+    # ✅ hostaddr は使わない（PoolerはIPv4で到達できる）
     ENGINE = create_engine(
         DB_URL,
         pool_pre_ping=True,
         connect_args={
             "sslmode": "require",
             "connect_timeout": 10,
-            "hostaddr": IPV4_OF_DB,   # これが効く！(psycopg2 の機能)
         },
     )
 
+    # 疎通テスト
     with ENGINE.begin() as conn:
         conn.exec_driver_sql("SELECT 1")
 
@@ -75,12 +74,13 @@ try:
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             )
         """))
-    st.caption("✅ DB接続OK（IPv4 強制）")
+    st.caption("✅ DB接続OK")
 except KeyError:
     st.warning("（開発向け）Secrets の DATABASE_URL が未設定です。DBを使わず閲覧のみで動作します。")
 except Exception as e:
-    st.error("❌ DB接続に失敗しました。DATABASE_URL と hostaddr（IPv4）を確認してください。")
+    st.error("❌ DB接続に失敗しました。DATABASE_URL（#→%23、?sslmode=require、port=6543）を確認してください。")
     st.exception(e)
+
 
 # ---- 5) ページ状態（radioのキーと分離）----
 PAGES = ["トップ", "ゲーム一覧", "教場MAP", "整理券発行", "アンケート・フィードバック"]
