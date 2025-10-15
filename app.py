@@ -24,14 +24,18 @@ GAMES = [
            \n獲得したスコアに応じてエンディングが変わるぞ。目指せ、報酬100万円!!", "download": "https://example.com/download/stg.zip"},
     {"id": "baka1",  "title": "『逃げろ！』",                           "genre": "バカゲー",   "time": "10分", "desc": "宿題、勉強、受験・・・。世の中には思わず逃げ出したくなっちゃうような嫌なことがたくさん！\
             \nこのゲームは、そんな人生の嫌なことからひたすら逃げ続けるゲームです。\
-            \n**全てから逃げ続けた先に****待ち受けるものとは一体・・・！？**", "download": "https://example.com/download/dialogue.zip"},
-    {"id": "action1","title": "『勇魔紀行』",                           "genre": "アクション", "time": "10分","desc": "説明文",                          "download": "https://example.com/download/karakasa.zip"},
+            \n**全てから逃げ続けた先に待ち受けるものとは一体……!?****", "download": "https://example.com/download/dialogue.zip"},
+    {"id": "action1","title": "『勇魔紀行』",                           "genre": "アクション", "time": "10~15分","desc": "簡単操作の昔懐かしアクション！！\
+            \nやることはただ一つ、ひたすら相手を倒せ!!\
+            \n全てを倒した先にあなたを待っているのは……!?",                          "download": "https://example.com/download/karakasa.zip"},
     {"id": "rythm1", "title": "『皆勤Beats!』",                         "genre": "リズムゲー", "time": "3分", "desc": "説明文",                          "download": "https://example.com/download/dialogue.zip"},
     {"id": "block",  "title": "『渡邊ブロック崩し』",                   "genre": "ブロック崩し","time": "3分","desc": "説明文",                          "download": "https://example.com/download/dialogue.zip"},
     {"id": "rpg1",   "title": "『TerreBleue』",                         "genre": "RPG",       "time": "フルだと2時間~3時間", "desc": "独自の世界観で繰り広げられる、”世界一青い”RPG。\
             \n国軍に入隊したことにより、2つの国を巡る争いに巻き込まれる少女たち。\
             \n彼女たちは戦争を集結させ、再び世界に平和と自然を取り戻すことはできるのか__？", "download": "https://example.com/download/dialogue.zip"},
-    {"id": "rpg2",   "title": "『Sentence』",                           "genre": "RPG",       "time": "3分", "desc": "説明文",                          "download": "https://example.com/download/dialogue.zip"},
+    {"id": "rpg2",   "title": "『Sentence』",                           "genre": "RPG",       "time": "5~10分", "desc": "日常の平穏には裏がある！？町のドタバタと裏にうずめく陰謀を暴き出せ！\
+            \nそしてその裏にある衝撃の真実とは…？恋愛あり、推理あり、沢山の体験を実装予定！！！\
+            \n（本体験版は恋愛推理実装してません）",                          "download": "https://example.com/download/dialogue.zip"},
     {"id": "rpg3",   "title": "『平和の祭典』",                         "genre": "RPG",       "time": "3分", "desc": "説明文",                          "download": "https://example.com/download/dialogue.zip"},
     {"id": "rpg4",   "title": "『Post-Humannica』",                     "genre": "RPG",       "time": "3分", "desc": "説明文",                          "download": "https://example.com/download/dialogue.zip"},
 ]
