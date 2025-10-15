@@ -156,6 +156,18 @@ if page == "トップ":
 elif page == "ゲーム一覧":
     st.subheader("ブースで遊べるゲーム一覧")
     st.info("DLリンクからゲームをダウンロードして、自宅でも続きを遊べます！")
+
+    for g in GAMES:
+        with st.container():
+            st.markdown(f"### {g['title']}")
+
+            # ここでゲームごとの画像を表示
+            image_path = f"assets/game_images/{g['id']}.png"  # 例: assets/game_images/stg1.png
+            if os.path.exists(image_path):
+                st.image(image_path, use_column_width=True)
+            else:
+                st.caption(f"（{image_path} が見つかりません）")
+
     for g in GAMES:
         with st.container():  # border=True は環境により未対応のため外す
             st.markdown(f"### {g['title']}")
