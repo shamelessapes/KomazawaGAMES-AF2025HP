@@ -44,6 +44,9 @@ ASSETS_DIR = BASE_DIR / "assets"
 MAP_IMAGE_PATH = ASSETS_DIR / "map_placeholder.png"
 TOP_IMAGE_PATH = ASSETS_DIR / "AF2025_poster_mini.PNG"  # ← GitHub上の実ファイル名に完全一致
 
+from pathlib import Path
+IMG_DIR = Path(__file__).parent / "asset" / "game_images"  # ← 実フォルダ名に合わせた
+
 
 # ---- 4) DB 接続（Secrets から・IPv4 強制）----
 # ---- 4) DB 接続（Supabase Pooler / Session 6543, SSL 必須）----
@@ -153,6 +156,7 @@ if page == "トップ":
              \n:camera:**Instagram：**@multicreaters ")
     st.divider()
 
+
 elif page == "ゲーム一覧":
     st.subheader("ブースで遊べるゲーム一覧")
     st.info("DLリンクからゲームをダウンロードして、自宅でも続きを遊べます！")
@@ -161,20 +165,32 @@ elif page == "ゲーム一覧":
         with st.container():
             st.markdown(f"### {g['title']}")
 
-            # ここでゲームごとの画像を表示
-            image_path = f"assets/game_images/{g['id']}.png"  # 例: assets/game_images/stg1.png
-            if os.path.exists(image_path):
-                st.image(image_path, use_column_width=True)
-            else:
-                st.caption(f"（{image_path} が見つかりません）")
+            # 拡張子の違いにも強くする（.png/.jpg/.jpeg/.webp を順に探索）
+            base_stem = g["id"]  # 例: action1
+            found = None
+            for ext in [".png", ".jpg", ".jpeg", ".webp", ".PNG", ".JPG"]:
+                p = IMG_DIR / f"{base_stem}{ext}"
+                if p.exists():
+                    found = p
+                    break
 
-    for g in GAMES:
-        with st.container():  # border=True は環境により未対応のため外す
-            st.markdown(f"### {g['title']}")
+            if found:
+                st.image(str(found), use_column_width=True)
+            else:
+                st.caption(f"（画像が見つかりません: {IMG_DIR / (base_stem + '.png')}）")
+                # デバッグ：一度だけ一覧を出す
+                if st.session_state.get("_img_list_shown") is None:
+                    st.session_state["_img_list_shown"] = True
+                    if IMG_DIR.exists():
+                        st.write("asset/game_image 内のファイル一覧:", sorted(os.listdir(IMG_DIR)))
+                    else:
+                        st.error("asset/game_image フォルダが見つかりません。")
+
             st.write(f"**ジャンル**: {g.get('genre','—')}　｜　**体験時間**: {g.get('time','—')}")
             st.write(g["desc"])
             st.write(f"[⬇ ダウンロード]({g['download']})")
-        st.markdown("---")
+            st.markdown("---")
+
 
 elif page == "教場MAP":
     st.subheader("教場MAP")
