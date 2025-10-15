@@ -45,7 +45,7 @@ MAP_IMAGE_PATH = ASSETS_DIR / "map_placeholder.png"
 TOP_IMAGE_PATH = ASSETS_DIR / "AF2025_poster_mini.PNG"  # ← GitHub上の実ファイル名に完全一致
 
 from pathlib import Path
-IMG_DIR = Path(__file__).parent / "asset" / "game_images"  # ← 実フォルダ名に合わせた
+IMG_DIR = Path(__file__).parent / "assets" / "game_images"  # ← 実フォルダ名に合わせた
 
 
 # ---- 4) DB 接続（Secrets から・IPv4 強制）----
