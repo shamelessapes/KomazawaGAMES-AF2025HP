@@ -9,6 +9,19 @@ import qrcode
 import streamlit as st
 from sqlalchemy import create_engine, text
 
+import os
+DB_URL = None
+try:
+    DB_URL = st.secrets["DATABASE_URL"]
+except Exception:
+    DB_URL = os.environ.get("DATABASE_URL")
+
+if not DB_URL:
+    st.error("DATABASE_URL が見つかりません。`.streamlit/secrets.toml` か環境変数に設定してください。")
+    st.stop()
+
+
+
 # ---- 1) 最初に page_config（他の st.* より先） ----
 st.set_page_config(page_title="駒澤GAMES:AF2025特設サイト", page_icon="🎮", layout="centered")
 
@@ -50,20 +63,6 @@ TOP_IMAGE_PATH = ASSETS_DIR / "AF2025_poster_mini.PNG"  # ← GitHub上の実フ
 
 from pathlib import Path
 IMG_DIR = Path(__file__).parent / "assets" / "game_images"  # ← 実フォルダ名に合わせた
-
-import os
-
-# 先に Streamlit Secrets、なければ環境変数から読む
-DB_URL = None
-try:
-    DB_URL = st.secrets["DATABASE_URL"]
-except Exception:
-    DB_URL = os.environ.get("DATABASE_URL")
-
-if not DB_URL:
-    st.error("DATABASE_URL が見つかりません。`.streamlit/secrets.toml` か環境変数に設定してください。")
-    st.stop()
-
 
 
 # ---- 4) DB 接続（Secrets から・IPv4 強制）----
