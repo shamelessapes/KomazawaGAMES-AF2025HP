@@ -9,17 +9,6 @@ import qrcode
 import streamlit as st
 from sqlalchemy import create_engine, text
 
-import os
-DB_URL = None
-try:
-    DB_URL = st.secrets["DATABASE_URL"]
-except Exception:
-    DB_URL = os.environ.get("DATABASE_URL")
-
-if not DB_URL:
-    st.error("DATABASE_URL が見つかりません。`.streamlit/secrets.toml` か環境変数に設定してください。")
-    st.stop()
-
 
 
 # ---- 1) 最初に page_config（他の st.* より先） ----
@@ -65,27 +54,35 @@ from pathlib import Path
 IMG_DIR = Path(__file__).parent / "assets" / "game_images"  # ← 実フォルダ名に合わせた
 
 
-# ---- 4) DB 接続（Secrets から・IPv4 強制）----
+# ---- DB_URL を一度だけ決める ----
+import os
+DB_URL = None
+try:
+    DB_URL = st.secrets["DATABASE_URL"]    # ← ここでだけ読む
+except Exception:
+    DB_URL = os.environ.get("DATABASE_URL")
+
+if not DB_URL:
+    st.error("DATABASE_URL が見つかりません。`.streamlit/secrets.toml` か環境変数に設定してください。")
+    st.stop()
+
+# ↓↓↓ ここから先で st.secrets["DATABASE_URL"] を二度と読まない！ ↓↓↓
+
 # ---- 4) DB 接続（Supabase Pooler / Session 6543, SSL 必須）----
+from sqlalchemy import create_engine, text
+
 ENGINE = None
 try:
-    DB_URL = st.secrets["DATABASE_URL"]  # 例: postgresql+psycopg2://...@aws-1-ap-northeast-1.pooler.supabase.com:6543/postgres?sslmode=require
-
-    # ✅ hostaddr は使わない（PoolerはIPv4で到達できる）
     ENGINE = create_engine(
         DB_URL,
         pool_pre_ping=True,
-        connect_args={
-            "sslmode": "require",
-            "connect_timeout": 10,
-        },
+        connect_args={"sslmode": "require", "connect_timeout": 10},
     )
-
     # 疎通テスト
     with ENGINE.begin() as conn:
         conn.exec_driver_sql("SELECT 1")
 
-    # （初回だけ）なければ tickets テーブル作成
+    # 初回テーブル
     with ENGINE.begin() as conn:
         conn.execute(text("""
             CREATE TABLE IF NOT EXISTS tickets (
@@ -95,11 +92,10 @@ try:
             )
         """))
     st.caption("✅ DB接続OK")
-except KeyError:
-    st.warning("（開発向け）Secrets の DATABASE_URL が未設定です。DBを使わず閲覧のみで動作します。")
 except Exception as e:
     st.error("❌ DB接続に失敗しました。DATABASE_URL（#→%23、?sslmode=require、port=6543）を確認してください。")
     st.exception(e)
+
 
 
 # ---- 5) ページ状態（radioのキーと分離）----
