@@ -43,13 +43,13 @@ GAMES = [
      "desc": "簡単操作の昔懐かしアクション！！やることはただ一つ、ひたすら相手を倒せ！！！"},
     {"id": "rythm1", "title": "『皆勤Beats!』", "genre": "リズムゲー", "time": "3分",
      "desc": "爽快リズム×ノベルの合体！個性豊かなヒロインたちと過ごす青春の物語。"},
-    {"id": "block1", "title": "『渡邊ブロック崩し』", "genre": "ブロック崩し", "time": "3分",
+    {"id": "block1", "title": "『ブロック崩し』", "genre": "ブロック崩し", "time": "3分",
      "desc": "サクッと遊べるシンプルなブロック崩し。"},
     {"id": "rpg1",   "title": "『TerreBleue』", "genre": "RPG", "time": "2~3時間(本編)",
      "desc": "”世界一青い”RPG。二国の争いに巻き込まれた少女たちは、世界に平和を取り戻せるのか。"},
     {"id": "rpg2",   "title": "『Sentence』", "genre": "RPG", "time": "5~10分",
      "desc": "日常の裏に潜む陰謀を暴け。恋愛・推理要素を順次実装予定。"},
-    {"id": "rpg3",   "title": "『平和の祭典』", "genre": "RPG", "time": "3分",
+    {"id": "rpg3",   "title": "『平和の祭典』", "genre": "RPG", "time": "試遊不可",
      "desc": "戦後の平和を祝う祭典。※AFでの試遊はありません。"},
     {"id": "rpg4",   "title": "『Post-Humannica』", "genre": "RPG", "time": "3分",
      "desc": "戦争から50年。便利屋姉弟が手にした太古の力。火を巡る選択の行方は。"},
@@ -188,12 +188,13 @@ page = st.session_state.page
 
 # ---- 8) ヘッダ ----
 st.title(SITE_TITLE)
-st.info("##### **駒澤GAMESオータムフェスティバル2025特設サイト**へようこそ！"
-        "\nこのサイトでは **整理券の発行** や **展示作品の紹介** が見られます。")
+st.info("##### こんにちは！大学公認のゲーム制作サークル、**駒澤GAMES**です。"
+        "\nこのサイトでは **整理券の発行** や **我々が作ったゲームの紹介** が見られます。")
 st.divider()
 
 # ---- 9) ページ本体 ----
 if page == "トップ":
+    st.write("#### なんと今だけ！ゲームを**３種類以上遊ぶとポストカードが貰える！**")
     if TOP_IMAGE_PATH.exists():
         st.image(str(TOP_IMAGE_PATH))
     else:
@@ -204,7 +205,7 @@ if page == "トップ":
             st.error("assets フォルダがありません。リポジトリに追加してください。")
 
     st.markdown("1. まずは遊びたいゲームを選びましょう。")
-    if st.button("🎮 展示作品一覧を見る"):
+    if st.button("🎮 ゲーム一覧を見る"):
         st.session_state.jump_to = "ゲーム一覧"; st.rerun()
 
     st.markdown("2. 注意事項に同意して **このサイトから整理券を発行** します。")
@@ -259,7 +260,7 @@ elif page == "教場MAP":
     st.info("くつろぎor休憩目的での使用も大歓迎です。\
             \n**ゆっくりしていってね！**")
     if MAP_IMAGE_PATH.exists():
-        st.image(str(MAP_IMAGE_PATH), caption="会場配置図（差し替え可）", use_column_width=True)
+        st.image(str(MAP_IMAGE_PATH), caption="駒澤大学３号館９０８教場", use_column_width=True)
     else:
         st.warning(f"MAP画像が見つかりません: {MAP_IMAGE_PATH}")
 
@@ -327,7 +328,7 @@ elif page == "整理券発行":
                     game_title = ID_TO_TITLE.get(game_id, game_id)
                     html = f"""
                     <div style="font-family: sans-serif;">
-                      <p>この度はご来場ありがとうございます。</p>
+                      <p>この度はご来場いただきありがとうございます。</p>
                       <h2>整理券を発行しました</h2>
                       <p><b>番号：</b>{ticket_no}</p>
                       <p><b>作品：</b>{game_title}</p>
