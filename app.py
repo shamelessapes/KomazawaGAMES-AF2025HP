@@ -1,23 +1,62 @@
-# ==================== app.py（完全版・置き換えOK） ====================
+# ==================== app.py（修正版） ====================
 import os
 import io
 from datetime import datetime
 from pathlib import Path
-
 import pandas as pd
 import qrcode
 import streamlit as st
 from sqlalchemy import create_engine, text
 
-
-
-# ---- 1) 最初に page_config（他の st.* より先） ----
+# ---- 1) ページ設定 ----
 st.set_page_config(page_title="駒澤GAMES:AF2025特設サイト", page_icon="🎮", layout="centered")
+st.write("Has secrets:", hasattr(st, "secrets"))
+st.write("Keys in secrets:", list(st.secrets.keys()) if hasattr(st, "secrets") else "—")
+st.write("DB_URL starts with:", DB_URL[:30] + "..." if DB_URL else "None")
 
-# ---- 2) 定数・データ ----
-SITE_TITLE = "🎮 駒澤GAMES：AF2025特設サイト"
-FEEDBACK_FORM_URL = "https://example.com/your-google-form"  # 必要なら Secrets に移してもOK
-HOST_PORT = "8501"
+
+# ---- 2) Secrets / 環境変数から DB_URL を読む ----
+DB_URL = None
+try:
+    DB_URL = st.secrets["DATABASE_URL"]
+except Exception:
+    DB_URL = os.environ.get("DATABASE_URL")
+
+if not DB_URL:
+    st.error("DATABASE_URL が見つかりません。`.streamlit/secrets.toml` か環境変数に設定してください。")
+    st.stop()
+
+# ---- 3) エンジン作成（ここ“だけ”で create_engine する）----
+ENGINE = None
+try:
+    ENGINE = create_engine(
+        DB_URL,
+        pool_pre_ping=True,
+        connect_args={
+            "sslmode": "require",
+            "connect_timeout": 10,
+        },
+    )
+
+    # 疎通テスト
+    with ENGINE.begin() as conn:
+        conn.exec_driver_sql("SELECT 1")
+
+    # 初回テーブル
+    with ENGINE.begin() as conn:
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS tickets (
+                id BIGSERIAL PRIMARY KEY,
+                game_id TEXT NOT NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+        """))
+    st.caption("✅ DB接続OK")
+except Exception as e:
+    st.error("❌ DB接続に失敗しました。DATABASE_URL（#→%23、?sslmode=require、port=6543）を確認してください。")
+    st.exception(e)
+
+
 
 # ゲーム一覧
 GAMES = [
@@ -44,7 +83,7 @@ GAMES = [
 ID_TO_TITLE = {g["id"]: g["title"] for g in GAMES}
 TITLE_TO_ID = {g["title"]: g["id"] for g in GAMES}
 
-# ---- 3) パス系----
+# ---- パス系----
 BASE_DIR = Path(__file__).parent
 ASSETS_DIR = BASE_DIR / "assets"
 MAP_IMAGE_PATH = ASSETS_DIR / "map_placeholder.png"
@@ -52,49 +91,6 @@ TOP_IMAGE_PATH = ASSETS_DIR / "AF2025_poster_mini.PNG"  # ← GitHub上の実フ
 
 from pathlib import Path
 IMG_DIR = Path(__file__).parent / "assets" / "game_images"  # ← 実フォルダ名に合わせた
-
-
-# ---- DB_URL を一度だけ決める ----
-import os
-DB_URL = None
-try:
-    DB_URL = st.secrets["DATABASE_URL"]    # ← ここでだけ読む
-except Exception:
-    DB_URL = os.environ.get("DATABASE_URL")
-
-if not DB_URL:
-    st.error("DATABASE_URL が見つかりません。`.streamlit/secrets.toml` か環境変数に設定してください。")
-    st.stop()
-
-# ↓↓↓ ここから先で st.secrets["DATABASE_URL"] を二度と読まない！ ↓↓↓
-
-# ---- 4) DB 接続（Supabase Pooler / Session 6543, SSL 必須）----
-from sqlalchemy import create_engine, text
-
-ENGINE = None
-try:
-    ENGINE = create_engine(
-        DB_URL,
-        pool_pre_ping=True,
-        connect_args={"sslmode": "require", "connect_timeout": 10},
-    )
-    # 疎通テスト
-    with ENGINE.begin() as conn:
-        conn.exec_driver_sql("SELECT 1")
-
-    # 初回テーブル
-    with ENGINE.begin() as conn:
-        conn.execute(text("""
-            CREATE TABLE IF NOT EXISTS tickets (
-                id BIGSERIAL PRIMARY KEY,
-                game_id TEXT NOT NULL,
-                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-            )
-        """))
-    st.caption("✅ DB接続OK")
-except Exception as e:
-    st.error("❌ DB接続に失敗しました。DATABASE_URL（#→%23、?sslmode=require、port=6543）を確認してください。")
-    st.exception(e)
 
 
 
