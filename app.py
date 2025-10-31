@@ -147,7 +147,7 @@ if DB_URL:
                 ON tickets(ticket_no)
             """))
 
-        st.caption("✅ DB接続OK")
+        #st.caption("✅ DB接続OK")
     except Exception as e:
         ENGINE = None  # 失敗時でも閲覧は継続
         st.error("❌ DB接続に失敗しました。DATABASE_URL（#→%23、?sslmode=require、port=6543 など）を確認してください。")
@@ -170,9 +170,21 @@ if "jump_to" in st.session_state:
 def _on_sidebar_change():
     st.session_state.page = st.session_state.page_select
 
+
 st.sidebar.header("ページ")
 st.sidebar.radio("ページ", PAGES, key="page_select", on_change=_on_sidebar_change)
 page = st.session_state.page
+
+#with st.sidebar.expander("📧 メール送信テスト"):
+    #test_to = st.text_input("テスト宛先メール", value=st.secrets.get("ORGANIZER_EMAIL", ""))
+    #if st.button("SMTPテスト送信"):
+        #try:
+            #html = "<h3>SMTP疎通テスト</h3><p>このメールが届けばSMTP設定OK！</p>"
+            #send_mail_with_inline_image(test_to, "【テスト】SMTP設定確認", html, None)
+            #st.success("テスト送信OK！受信を確認してください。")
+        #except Exception as e:
+            #st.error("テスト送信に失敗。secretsの値・ポート・プロバイダ設定を確認してください。")
+            #st.exception(e)
 
 # ---- 8) ヘッダ ----
 st.title(SITE_TITLE)
