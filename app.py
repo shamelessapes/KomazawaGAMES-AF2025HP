@@ -29,7 +29,7 @@ except Exception:
 
 # ---- 3) 定数＆データ ----
 SITE_TITLE = "🎮 駒澤GAMES：AF2025特設サイト"
-FEEDBACK_FORM_URL = "https://example.com/your-google-form"
+FEEDBACK_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSc6egWFoGeRGgu2KinnL7s0BhNVmR6cafJyE4qDz4qjlYx5Vg/closedform?pli=1"
 HOST_PORT = "8501"
 
 # ゲーム一覧
